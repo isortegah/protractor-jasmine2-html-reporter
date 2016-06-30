@@ -1,31 +1,28 @@
 {
-  "name": "protractor-jasmine2-html-reporter",
-  "version": "0.0.6",
-  "description": "HTML reporter for Jasmine2 and Protractor",
+  "name": "protractor-jasmine2-json-reporter",
+  "version": "0.0.1",
+  "description": "JSON reporter for Jasmine2 and Protractor",
   "main": "index.js",
   "scripts": {
     "test": "protractor protractor.config.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kenzitron/protractor-jasmine2-html-reporter"
+    "url": "https://github.com/isortegah/protractor-jasmine2-json-reporter"
   },
   "keywords": [
     "jasmine2",
     "protractor",
     "reporter",
-    "html",
+    "json",
     "test",
     "functional testing",
     "screenshots",
     "end2end",
     "bdd"
   ],
-  "author": "Alejandro Asensio <alejandro@kenzilab.com> (http://www.kenzilab.com/)",
-  "license": "BSD-2-Clause",
-  "bugs": {
-    "url": "https://github.com/Kenzitron/protractor-jasmine2-html-reporter/issues"
-  },
+  "author": "Ivan Sebastian Ortega Huixtlacatl <isortegah@gmail.com> ",
+  "license": "MIT",
   "dependencies": {
     "hat": "0.0.3",
     "lodash": "^4.0.0",
