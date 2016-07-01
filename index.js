@@ -84,7 +84,7 @@ function Jasmine2JSONReporter(options) {
     self.fixedScreenshotName = options.fixedScreenshotName === UNDEFINED ? false : options.fixedScreenshotName;
     self.consolidate = options.consolidate === UNDEFINED ? true : options.consolidate;
     self.consolidateAll = self.consolidate !== false && (options.consolidateAll === UNDEFINED ? true : options.consolidateAll);
-    self.filePrefix = options.filePrefix || (self.consolidateAll ? 'htmlReport' : 'htmlReport-');
+    self.filePrefix = options.filePrefix || (self.consolidateAll ? 'jsonReport' : 'jsonReport-');
 
     var suites = [],
         currentSuite = null,
@@ -209,15 +209,15 @@ function Jasmine2JSONReporter(options) {
     };
 
     self.getOrWriteNestedOutput = function(suite) {
-        var output = suiteAsJson(suite);
-        for (var i = 0; i < suite._suites.length; i++) {
+        var output = JSON.stringify(suiteAsJson(suite));
+        /*for (var i = 0; i < suite._suites.length; i++) {
             output += self.getOrWriteNestedOutput(suite._suites[i]);
-        }
+        }*/
         if (self.consolidateAll || self.consolidate && suite._parent) {
             return output;
         } else {
             // if we aren't supposed to consolidate output, just write it now
-            wrapOutputAndWriteFile(generateFilename(suite), output);
+            wrapOutputAndWriteFile(generateFilename(suite),output);
             return '';
         }
     };
@@ -267,9 +267,11 @@ function Jasmine2JSONReporter(options) {
         for (var i = 0; i < suite._specs.length; i++) {
             suite._specs[i] =  specAsJson(suite._specs[i]);
         }
-        return JSON.stringify(suite);
+        for( var i = 0; i < suite._suites.length; i++ ){
+            suite._suites[i] = suiteAsJson(suite._suites[i]);
+        }
+        return suite;
     }
-    function specAsHtml(spec) {
 
     function specAsJson(spec) {
         delete spec['_suite'];
