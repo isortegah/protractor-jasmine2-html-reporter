@@ -68,7 +68,7 @@ function rmdir(dir) {
     }catch (e) { log("problem trying to remove a folder:" + dir); }
 }
 
-function Jasmine2HTMLReporter(options) {
+function Jasmine2JSONReporter(options) {
 
     var self = this;
 
@@ -209,7 +209,7 @@ function Jasmine2HTMLReporter(options) {
     };
 
     self.getOrWriteNestedOutput = function(suite) {
-        var output = suiteAsHtml(suite);
+        var output = suiteAsJson(suite);
         for (var i = 0; i < suite._suites.length; i++) {
             output += self.getOrWriteNestedOutput(suite._suites[i]);
         }
@@ -262,57 +262,18 @@ function Jasmine2HTMLReporter(options) {
         stream.end();
     };
 
-    function suiteAsHtml(suite) {
-
-        var html = '<article class="suite">';
-        html += '<header>';
-        html += '<h2>' + getFullyQualifiedSuiteName(suite) + ' - ' + elapsed(suite._startTime, suite._endTime) + 's</h2>';
-        html += '<ul class="stats">';
-        html += '<li>Tests: <strong>' + suite._specs.length + '</strong></li>';
-        html += '<li>Skipped: <strong>' + suite._skipped + '</strong></li>';
-        html += '<li>Failures: <strong>' + suite._failures + '</strong></li>';
-        html += '</ul> </header>';
-
+    function suiteAsJson(suite) {
+        delete suite['_parent'];
         for (var i = 0; i < suite._specs.length; i++) {
-            var spec = suite._specs[i];
-            html += '<div class="spec">';
-            html += specAsHtml(spec);
-                html += '<div class="resume">';
-                if (spec.screenshot !== UNDEFINED){
-                    html += '<a href="' + self.screenshotsFolder + spec.screenshot + '">';
-                    html += '<img src="' + self.screenshotsFolder + spec.screenshot + '" width="100" height="100" />';
-                    html += '</a>';
-                }
-                html += '<br />';
-                var num_tests= spec.failedExpectations.length + spec.passedExpectations.length;
-                var percentage = (spec.passedExpectations.length*100)/num_tests;
-                html += '<span>Tests passed: ' + parseDecimalRoundAndFixed(percentage,2) + '%</span><br /><progress max="100" value="' + Math.round(percentage) + '"></progress>';
-                html += '</div>';
-            html += '</div>';
+            suite._specs[i] =  specAsJson(suite._specs[i]);
         }
-        html += '\n </article>';
-        return html;
+        return JSON.stringify(suite);
     }
     function specAsHtml(spec) {
 
-        var html = '<div class="description">';
-        html += '<h3>' + escapeInvalidHtmlChars(spec.description) + ' - ' + elapsed(spec._startTime, spec._endTime) + 's</h3>';
-
-        if (spec.failedExpectations.length > 0 || spec.passedExpectations.length > 0 ){
-            html += '<ul>';
-            _.each(spec.failedExpectations, function(expectation){
-                html += '<li>';
-                html += expectation.message + '<span style="padding:0 1em;color:red;">&#10007;</span>';
-                html += '</li>';
-            });
-            _.each(spec.passedExpectations, function(expectation){
-                html += '<li>';
-                html += expectation.message + '<span style="padding:0 1em;color:green;">&#10003;</span>';
-                html += '</li>';
-            });
-            html += '</ul></div>';
-        }
-        return html;
+    function specAsJson(spec) {
+        delete spec['_suite'];
+        return spec;
     }
 
     self.writeFile = function(filename, text) {
@@ -355,15 +316,13 @@ function Jasmine2HTMLReporter(options) {
     };
 
     // To remove complexity and be more DRY about the silly preamble and <testsuites> element
-    var prefix = '<!DOCTYPE html><html><head lang=en><meta charset=UTF-8><title></title><style>body{font-family:"open_sans",sans-serif}.suite{width:100%;overflow:auto}.suite .stats{margin:0;width:90%;padding:0}.suite .stats li{display:inline;list-style-type:none;padding-right:20px}.suite h2{margin:0}.suite header{margin:0;padding:5px 0 5px 5px;background:#003d57;color:white}.spec{width:100%;overflow:auto;border-bottom:1px solid #e5e5e5}.spec:hover{background:#e8f3fb}.spec h3{margin:5px 0}.spec .description{margin:1% 2%;width:65%;float:left}.spec .resume{width:29%;margin:1%;float:left;text-align:center}</style></head>';
-        prefix += '<body><section>';
-    var suffix = '\n</section></body></html>';
+
     function wrapOutputAndWriteFile(filename, text) {
-        if (filename.substr(-5) !== '.html') { filename += '.html'; }
-        self.writeFile(filename, (prefix + text + suffix));
+        if (filename.substr(-5) !== '.json') { filename += '.json'; }
+        self.writeFile(filename, text);
     }
 
     return this;
 }
 
-module.exports = Jasmine2HTMLReporter;
+module.exports = Jasmine2JSONReporter;
