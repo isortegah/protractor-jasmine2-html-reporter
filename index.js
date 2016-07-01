@@ -85,6 +85,9 @@ function Jasmine2JSONReporter(options) {
     self.consolidate = options.consolidate === UNDEFINED ? true : options.consolidate;
     self.consolidateAll = self.consolidate !== false && (options.consolidateAll === UNDEFINED ? true : options.consolidateAll);
     self.filePrefix = options.filePrefix || (self.consolidateAll ? 'jsonReport' : 'jsonReport-');
+    self.baseUrl = options.baseUrl === UNDEFINED ? false : options.baseUrl;
+    self.service = options.service === UNDEFINED ? false : options.service;
+    self.idReport = options.idReport === UNDEFINED ? '1' : options.idReport;
 
     var suites = [],
         currentSuite = null,
@@ -210,16 +213,10 @@ function Jasmine2JSONReporter(options) {
 
     self.getOrWriteNestedOutput = function(suite) {
         var output = JSON.stringify(suiteAsJson(suite));
-        /*for (var i = 0; i < suite._suites.length; i++) {
-            output += self.getOrWriteNestedOutput(suite._suites[i]);
-        }*/
-        if (self.consolidateAll || self.consolidate && suite._parent) {
-            return output;
-        } else {
-            // if we aren't supposed to consolidate output, just write it now
-            wrapOutputAndWriteFile(generateFilename(suite),output);
-            return '';
-        }
+        if(self.baseUrl && self.service)
+            sendToService();
+        wrapOutputAndWriteFile(generateFilename(suite),output);
+
     };
 
     /******** Helper functions with closure access for simplicity ********/
@@ -276,6 +273,10 @@ function Jasmine2JSONReporter(options) {
     function specAsJson(spec) {
         delete spec['_suite'];
         return spec;
+    }
+
+    function sendToService(){
+
     }
 
     self.writeFile = function(filename, text) {
