@@ -2,7 +2,8 @@ var fs     = require('fs'),
     mkdirp = require('mkdirp'),
     _      = require('lodash'),
     path   = require('path'),
-    hat    = require('hat');
+    hat    = require('hat'),
+    request = require('request');
 
 require('string.prototype.startswith');
 
@@ -88,6 +89,7 @@ function Jasmine2JSONReporter(options) {
     self.baseUrl = options.baseUrl === UNDEFINED ? false : options.baseUrl;
     self.service = options.service === UNDEFINED ? false : options.service;
     self.idReport = options.idReport === UNDEFINED ? '1' : options.idReport;
+    self.idTest = options.idTest === UNDEFINED ? '1' : options.idTest;
 
     var suites = [],
         currentSuite = null,
@@ -200,12 +202,8 @@ function Jasmine2JSONReporter(options) {
         for (var i = 0; i < suites.length; i++) {
             output += self.getOrWriteNestedOutput(suites[i]);
         }
-        // if we have anything to write here, write out the consolidated file
-        if (output) {
-            wrapOutputAndWriteFile(self.filePrefix, output);
-        }
-        //log("Specs skipped but not reported (entire suite skipped or targeted to specific specs)", totalSpecsDefined - totalSpecsExecuted + totalSpecsDisabled);
-
+        
+        
         self.finished = true;
         // this is so phantomjs-testrunner.js can tell if we're done executing
         exportObject.endTime = new Date();
@@ -213,15 +211,19 @@ function Jasmine2JSONReporter(options) {
 
     self.getOrWriteNestedOutput = function(suite) {
         var output = JSON.stringify(suiteAsJson(suite));
-        if(self.baseUrl && self.service)
-            sendToService();
+        if(self.baseUrl && self.service){
+            var toService = JSON.parse(output);
+            toService.idRun = self.idReport; 
+            toService.idTest = self.idTest;
+            sendToService(toService);
+        }
         wrapOutputAndWriteFile(generateFilename(suite),output);
 
     };
 
     /******** Helper functions with closure access for simplicity ********/
     function generateFilename(suite) {
-        return self.filePrefix + getFullyQualifiedSuiteName(suite, true) + '.html';
+        return self.filePrefix + getFullyQualifiedSuiteName(suite, true);
     }
 
     function getFullyQualifiedSuiteName(suite, isFilename) {
@@ -275,8 +277,14 @@ function Jasmine2JSONReporter(options) {
         return spec;
     }
 
-    function sendToService(){
-
+    function sendToService(output){
+        request.post(self.baseUrl+self.service,
+            {json:output},
+            function(err, response, body){
+                //console.log(err);
+                //console.log(response);
+                console.log(body);
+        })
     }
 
     self.writeFile = function(filename, text) {
@@ -321,6 +329,7 @@ function Jasmine2JSONReporter(options) {
     // To remove complexity and be more DRY about the silly preamble and <testsuites> element
 
     function wrapOutputAndWriteFile(filename, text) {
+        console.log(filename)
         if (filename.substr(-5) !== '.json') { filename += '.json'; }
         self.writeFile(filename, text);
     }
