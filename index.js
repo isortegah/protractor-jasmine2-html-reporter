@@ -88,6 +88,7 @@ function Jasmine2JSONReporter(options) {
     self.filePrefix = options.filePrefix || (self.consolidateAll ? 'jsonReport' : 'jsonReport-');
     self.baseUrl = options.baseUrl === UNDEFINED ? false : options.baseUrl;
     self.service = options.service === UNDEFINED ? false : options.service;
+    self.serviceImg = options.serviceImg === UNDEFINED ? false : options.serviceImg;
     self.idReport = options.idReport === UNDEFINED ? '1' : options.idReport;
     self.idTest = options.idTest === UNDEFINED ? '1' : options.idTest;
 
@@ -159,9 +160,9 @@ function Jasmine2JSONReporter(options) {
         if ((self.takeScreenshots && !self.takeScreenshotsOnlyOnFailures) ||
             (self.takeScreenshots && self.takeScreenshotsOnlyOnFailures && isFailed(spec))) {
             if (!self.fixedScreenshotName)
-                spec.screenshot = hat() + '.png';
+                spec.screenshot = hat() + self.idReport +'.png';
             else
-                spec.screenshot = sanitizeFilename(spec.description) + '.png';
+                spec.screenshot = sanitizeFilename(spec.description) + self.idReport + '.png';
 
             browser.takeScreenshot().then(function (png) {
                 browser.getCapabilities().then(function (capabilities) {
@@ -174,6 +175,9 @@ function Jasmine2JSONReporter(options) {
                     mkdirp(path.dirname(screenshotPath), function (err) {
                         if (err) {
                             throw new Error('Could not create directory for ' + screenshotPath);
+                        }
+                        if(self.serviceImg){
+                            sendToServiceImg(png,spec.screenshot)
                         }
                         writeScreenshot(png, screenshotPath);
                     });
@@ -281,10 +285,23 @@ function Jasmine2JSONReporter(options) {
         request.post(self.baseUrl+self.service,
             {json:output},
             function(err, response, body){
-                //console.log(err);
-                //console.log(response);
+                
                 console.log(body);
         })
+    }
+
+    function sendToServiceImg(dataImg, nameFile){
+        var formData = {
+            filename: nameFile,
+            file: dataImg
+        }
+        request.post({url : self.baseUrl+self.serviceImg, formData: formData},
+                        function(err, resp, body){
+                            if(err) {
+                                console.log('upload failes: ', err);
+                            }
+                            console.log('Upload succesful! ', body);
+                        })
     }
 
     self.writeFile = function(filename, text) {
